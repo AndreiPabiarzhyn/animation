@@ -41,40 +41,7 @@
   </div>
   <div id="timeline"></div>
 
-  <script>
-    window.exportGIF = function () {
-      if (typeof frames === 'undefined' || frames.length === 0) {
-        alert("Нет кадров для экспорта.");
-        return;
-      }
-
-      const gif = new GIF({
-        workers: 2,
-        quality: 10,
-        width: 450,
-        height: 400,
-        workerScript: 'gif.worker.js'  // ← ОБЯЗАТЕЛЬНО!
-      });
-
-      for (const frame of frames) {
-        if (!frame) continue;
-        gif.addFrame(frame, { delay: 1000 / fps });
-      }
-
-      gif.on('finished', function(blob) {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'animation.gif';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      });
-
-      gif.render();
-    }
-  </script>
+ 
   <script src="app.js"></script>
 </body>
 </html>
