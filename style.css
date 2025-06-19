@@ -1,0 +1,119 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+}
+
+h1 {
+  margin-bottom: 16px;
+}
+
+#main {
+  display: flex;
+  gap: 20px;
+}
+
+.panel {
+  display: grid;
+  grid-template-columns: repeat(2, 60px);
+  gap: 10px;
+  padding: 12px;
+  background: #f0f0f0;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.panel button,
+.panel input[type=color],
+.panel input[type=number] {
+  width: 56px;
+  height: 56px;
+  font-size: 24px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: white;
+  text-align: center;
+}
+
+.panel input[type=number] {
+  font-size: 16px;
+  text-align: center;
+  line-height: 56px;
+  padding: 0;
+}
+
+.panel button.active,
+button.active {
+  background: #d0eaff;
+  border-color: #339af0;
+  color: black;
+}
+
+button.clicked {
+  transform: scale(0.95);
+  transition: transform 0.1s ease;
+}
+
+#canvas-container {
+  position: relative;
+  width: 450px;
+  height: 400px;
+  background-image: linear-gradient(#ccc 1px, transparent 1px), linear-gradient(90deg, #ccc 1px, transparent 1px);
+  background-size: 20px 20px;
+  border: 2px solid black;
+}
+
+#canvas,
+#onion,
+#cursorCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+#onion {
+  z-index: 1;
+}
+
+#canvas {
+  z-index: 2;
+}
+
+#cursorCanvas {
+  z-index: 3;
+  pointer-events: none;
+}
+
+.fps-container {
+  margin-top: 20px;
+  text-align: center;
+}
+
+#timeline {
+  margin-top: 10px;
+  display: flex;
+  gap: 5px;
+}
+
+.thumb {
+  width: 50px;
+  height: 50px;
+  border: 2px solid #ccc;
+  position: relative;
+}
+
+.thumb.active {
+  border-color: blue;
+}
+
+.thumb-number {
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  font-size: 10px;
+  background: white;
+  padding: 0 2px;
+}
