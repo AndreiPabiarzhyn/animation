@@ -302,30 +302,23 @@ function showCursorSize(e) {
 }
 
 function exportGIF() {
-  // обновим текущий фрейм перед экспортом
-  saveCurrentFrame();
-
-  const gif = new GIF({
-    workers: 2,
-    quality: 10,
-    width: 450,
-    height: 400,
-    workerScript: 'js/gif.worker.js'
-  });
-
-  // только непустые фреймы
-  let validFrames = frames.filter(f => f !== null);
-
-  if (validFrames.length === 0) {
-    alert("Нет кадров для экспорта.");
-    return;
+  const gif = new GIF({ workers: 2, quality: 10, width: 450, height: 400, workerScript: 'js/gif.worker.js' });
+  for (const frame of frames) {
+    if (!frame) continue;
+    // Создаём временный холст
+    const temp = document.createElement('canvas');
+    temp.width = frame.width;
+    temp.height = frame.height;
+    const tctx = temp.getContext('2d');
+    // Рисуем белый фон
+    tctx.fillStyle = '#ffffff';
+    tctx.fillRect(0, 0, temp.width, temp.height);
+    // Поверх рисуем существующий кадр
+    tctx.drawImage(frame, 0, 0);
+    // И только затем добавляем его в GIF
+    gif.addFrame(tctx, { delay: 1000 / fps });
   }
-
-  for (const frame of validFrames) {
-    gif.addFrame(frame, { delay: 1000 / fps });
-  }
-
-  gif.on('finished', function(blob) {
+  gif.on('finished', blob => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -333,9 +326,9 @@ function exportGIF() {
     link.click();
     URL.revokeObjectURL(url);
   });
-
   gif.render();
 }
+
 
 
 addFrame();
