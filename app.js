@@ -307,7 +307,7 @@ function exportGIF() {
       quality: 10,
       width: 450,
       height: 400,
-      workerScript: 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js'
+      workerScript: 'js/gif.worker.js' // локальный путь!
     });
 
     for (const frame of frames) {
