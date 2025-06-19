@@ -302,29 +302,40 @@ function showCursorSize(e) {
 }
 
 function exportGIF() {
-    const gif = new GIF({
-      workers: 2,
-      quality: 10,
-      width: 450,
-      height: 400,
-      workerScript: 'js/gif.worker.js' // локальный путь!
-    });
+  // обновим текущий фрейм перед экспортом
+  saveCurrentFrame();
 
-    for (const frame of frames) {
-      if (!frame) continue;
-      gif.addFrame(frame, { delay: 1000 / fps });
-    }
+  const gif = new GIF({
+    workers: 2,
+    quality: 10,
+    width: 450,
+    height: 400,
+    workerScript: 'js/gif.worker.js'
+  });
 
-    gif.on('finished', function(blob) {
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'animation.gif';
-      link.click();
-      URL.revokeObjectURL(url);
-    });
+  // только непустые фреймы
+  let validFrames = frames.filter(f => f !== null);
 
-    gif.render();
+  if (validFrames.length === 0) {
+    alert("Нет кадров для экспорта.");
+    return;
   }
+
+  for (const frame of validFrames) {
+    gif.addFrame(frame, { delay: 1000 / fps });
+  }
+
+  gif.on('finished', function(blob) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'animation.gif';
+    link.click();
+    URL.revokeObjectURL(url);
+  });
+
+  gif.render();
+}
+
 
 addFrame();
