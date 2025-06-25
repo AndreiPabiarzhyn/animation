@@ -1,4 +1,3 @@
-// app.js
 let tool = "brush";
 let color = "#000000";
 let size = 4;
@@ -18,13 +17,34 @@ const onionCtx = onion.getContext("2d");
 const cursorCtx = cursorCanvas.getContext("2d");
 const timeline = document.getElementById("timeline");
 
+function resizeCanvasToContainer() {
+  const container = document.getElementById("canvas-container");
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+
+  [canvas, onion, cursorCanvas].forEach(c => {
+    c.width = width;
+    c.height = height;
+  });
+
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+}
+
+window.addEventListener("resize", () => {
+  saveCurrentFrame();
+  resizeCanvasToContainer();
+  showFrame(currentFrame);
+});
+resizeCanvasToContainer();
+
 canvas.addEventListener("mousedown", startDraw);
 canvas.addEventListener("mousemove", draw);
 canvas.addEventListener("mouseup", stopDraw);
 canvas.addEventListener("mouseleave", stopDraw);
 
 cursorCanvas.addEventListener("mousemove", showCursorSize);
-cursorCanvas.addEventListener("mouseleave", () => cursorCtx.clearRect(0, 0, 450, 400));
+cursorCanvas.addEventListener("mouseleave", () => cursorCtx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height));
 
 document.getElementById("colorPicker").addEventListener("input", e => color = e.target.value);
 document.getElementById("brushSize").addEventListener("input", e => size = parseInt(e.target.value));
@@ -38,19 +58,6 @@ function setTool(t, buttonEl) {
     setTimeout(() => buttonEl.classList.remove("clicked"), 150);
   }
 }
-
-document.querySelectorAll(".panel button").forEach(button => {
-  button.addEventListener("click", () => {
-    const toolAttr = button.getAttribute("data-tool");
-    if (toolAttr) setTool(toolAttr, button);
-    else {
-      document.querySelectorAll(".panel button").forEach(b => b.classList.remove("active"));
-      button.classList.add("active");
-      button.classList.add("clicked");
-      setTimeout(() => button.classList.remove("clicked"), 150);
-    }
-  });
-});
 
 function getCoords(e) {
   const rect = canvas.getBoundingClientRect();
@@ -79,8 +86,6 @@ function draw(e) {
   if (!drawing) return;
   const { x, y } = getCoords(e);
   ctx.lineWidth = size;
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
 
   if (tool === "brush") {
     ctx.strokeStyle = color;
@@ -95,22 +100,19 @@ function draw(e) {
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.globalCompositeOperation = "source-over";
-  } else if (tool === "circle") {
+  } else if (tool === "circle" || tool === "square") {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (frames[currentFrame]) ctx.drawImage(frames[currentFrame], 0, 0);
     ctx.strokeStyle = color;
     const width = x - startX;
     const height = y - startY;
-    ctx.beginPath();
-    ctx.ellipse(startX + width / 2, startY + height / 2, Math.abs(width) / 2, Math.abs(height) / 2, 0, 0, Math.PI * 2);
-    ctx.stroke();
-  } else if (tool === "square") {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (frames[currentFrame]) ctx.drawImage(frames[currentFrame], 0, 0);
-    ctx.strokeStyle = color;
-    const width = x - startX;
-    const height = y - startY;
-    ctx.strokeRect(startX, startY, width, height);
+    if (tool === "circle") {
+      ctx.beginPath();
+      ctx.ellipse(startX + width / 2, startY + height / 2, Math.abs(width) / 2, Math.abs(height) / 2, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      ctx.strokeRect(startX, startY, width, height);
+    }
   }
 }
 
@@ -143,18 +145,15 @@ function floodFill(x, y) {
     const key = `${x},${y}`;
     if (visited.has(key)) continue;
     visited.add(key);
-
     data[i] = fillColor[0];
     data[i+1] = fillColor[1];
     data[i+2] = fillColor[2];
     data[i+3] = 255;
-
     stack.push({ x: x + 1, y });
     stack.push({ x: x - 1, y });
     stack.push({ x, y: y + 1 });
     stack.push({ x, y: y - 1 });
   }
-
   ctx.putImageData(imageData, 0, 0);
 }
 
@@ -185,8 +184,7 @@ function undo() {
       const frame = document.createElement("canvas");
       frame.width = canvas.width;
       frame.height = canvas.height;
-      const frameCtx = frame.getContext("2d");
-      frameCtx.drawImage(img, 0, 0);
+      frame.getContext("2d").drawImage(img, 0, 0);
       frames[currentFrame] = frame;
       updateThumbnails();
     };
@@ -285,13 +283,11 @@ function stopAnim() {
 function updateSpeed(value) {
   fps = parseInt(value);
   document.getElementById("fpsValue").textContent = value;
-  if (interval) {
-    playAnim();
-  }
+  if (interval) playAnim();
 }
 
 function showCursorSize(e) {
-  cursorCtx.clearRect(0, 0, 450, 400);
+  cursorCtx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height);
   const rect = cursorCanvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
@@ -302,20 +298,16 @@ function showCursorSize(e) {
 }
 
 function exportGIF() {
-  const gif = new GIF({ workers: 2, quality: 10, width: 450, height: 400, workerScript: 'js/gif.worker.js' });
+  const gif = new GIF({ workers: 2, quality: 10, width: canvas.width, height: canvas.height, workerScript: 'js/gif.worker.js' });
   for (const frame of frames) {
     if (!frame) continue;
-    // Создаём временный холст
     const temp = document.createElement('canvas');
     temp.width = frame.width;
     temp.height = frame.height;
     const tctx = temp.getContext('2d');
-    // Рисуем белый фон
     tctx.fillStyle = '#ffffff';
     tctx.fillRect(0, 0, temp.width, temp.height);
-    // Поверх рисуем существующий кадр
     tctx.drawImage(frame, 0, 0);
-    // И только затем добавляем его в GIF
     gif.addFrame(tctx, { delay: 1000 / fps });
   }
   gif.on('finished', blob => {
@@ -328,7 +320,5 @@ function exportGIF() {
   });
   gif.render();
 }
-
-
 
 addFrame();
