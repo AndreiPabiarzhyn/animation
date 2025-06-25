@@ -151,7 +151,6 @@ button.clicked {
   pointer-events: none;
 }
 
-/* === FPS и таймлайн === */
 .fps-container {
   margin-top: 20px;
   text-align: center;
